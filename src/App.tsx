@@ -18,9 +18,11 @@ export const App: React.FC = () => {
   const [clickButtons, setClickButtons] = useState('');
   const [disabledInput, setDisabledInput] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [tempTodo, setTempTodo] = useState<number>(0);
+  const [tempTodo, setTempTodo] = useState<Todo | null>(null);
   const [loadingTodo, setLoadingTodo] = useState<number | null>(null);
   const [loadingNewItem, setLoadingNewItem] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [deleteIds, setDeleteIds] = useState<number[]>([]);
 
   useEffect(() => {
     todosService
@@ -40,6 +42,57 @@ export const App: React.FC = () => {
 
     setTodoItem(filterItems);
   }, [clickButtons]);
+
+  const handleForm = (event: React.FormEvent) => {
+    setDisabledInput(true);
+    event.preventDefault();
+
+    if (creatNewTodos.trim() === '') {
+      return;
+    }
+
+    const newTodo: Omit<Todo, 'id'> = {
+      userId,
+      title: creatNewTodos,
+      completed: false,
+    };
+
+    // Додаємо тимчасовий todo в кінець списку
+    const tempTodoItem = { ...newTodo, id: Date.now() };
+
+    setTempTodo(tempTodoItem);
+    setTodoItem(prev => [...prev, tempTodoItem]);
+
+    setLoadingTodo(Date.now());
+    setLoadingNewItem(true);
+
+    todosService
+      .createPost(newTodo)
+      .then(createdTodo => {
+        setTodoItem(prev =>
+          prev.map(todo => (todo.id === tempTodoItem.id ? createdTodo : todo)),
+        );
+        setTempTodo(null); // Очищаємо tempTodo після успішного додавання
+        setCreateNewTodos('');
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
+      })
+      .catch(() => {
+        setStateError('Unable to add a todo');
+      })
+      .finally(() => {
+        setDisabledInput(false);
+        setLoadingNewItem(false);
+      });
+  };
+
+  const forClearCompleted = () => {
+    const completedTodo = todoItem.filter(todo => todo.completed);
+    const completedIds = completedTodo.map(todo => todo.id);
+
+    setTodoItem(prev => prev.filter(todo => !completedIds.includes(todo.id)));
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function errorGetTodos() {
@@ -71,6 +124,7 @@ export const App: React.FC = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const TodoDeleteButton = (usersId: number) => {
+    setDeleteIds(prevIds => [...prevIds, userId]);
     todosService
       .deleteTodos(usersId)
       .then(() => {
@@ -85,7 +139,7 @@ export const App: React.FC = () => {
           });
       })
       .catch(() => {
-        setStateError('Unable delete todo');
+        setStateError('Unable to delete a todo ');
         setTimeout(() => setStateError(''), 3000);
       });
   };
@@ -110,45 +164,18 @@ export const App: React.FC = () => {
       });
   };
 
-  const handleForm = (event: React.FormEvent) => {
-    setDisabledInput(true);
-    event.preventDefault();
+  useEffect(() => {
+    let filterItems = [...todoItem];
 
-    if (creatNewTodos.trim() === '') {
-      return;
+    if (clickButtons === 'active') {
+      filterItems = filterItems.filter(todo => !todo.completed);
+    } else if (clickButtons === 'completed') {
+      filterItems = filterItems.filter(todo => todo.completed);
+    } else if (clickButtons === 'clearCompleted') {
     }
 
-    const newTodo: Omit<Todo, 'id'> = {
-      userId,
-      title: creatNewTodos,
-      completed: false,
-    };
-
-    setLoadingTodo(Date.now());
-    setLoadingNewItem(true); // Активуємо лоадер
-
-    todosService
-      .createPost(newTodo)
-      .then(createdTodo => {
-        setTodoItem(prevPost => [...prevPost, createdTodo]);
-        setTempTodo(prev => prev + 1);
-        setCreateNewTodos('');
-
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 0);
-      })
-      .catch(() => {
-        setStateError('Unable to add a todo');
-      })
-      .finally(() => {
-        setDisabledInput(false);
-
-        setTimeout(() => {
-          setLoadingNewItem(false);
-        }, 1000);
-      });
-  };
+    setTodoItem(filterItems);
+  }, [clickButtons]);
 
   if (!todosService.USER_ID) {
     return <UserWarning />;
@@ -192,136 +219,120 @@ export const App: React.FC = () => {
         <section className="todoapp__main" data-cy="TodoList">
           {/* This is a completed todo */}
 
-          {tempTodo !== null &&
-            todoItem.map(item => (
-              <>
+          {tempTodo && (
+            <>
+              <div
+                data-cy="Todo"
+                key={tempTodo.id}
+                className={classNames('todo', {
+                  completed: controlChecked.includes(tempTodo.id),
+                })}
+              >
+                <label
+                  className="todo__status-label"
+                  onClick={() => {
+                    setControlChecked([tempTodo.id]);
+                    setTodoItem(prevItems =>
+                      prevItems.map(todo =>
+                        todo.id === tempTodo.id
+                          ? { ...todo, completed: !todo.completed }
+                          : todo,
+                      ),
+                    );
+                  }}
+                >
+                  <input
+                    data-cy="TodoStatus"
+                    type="checkbox"
+                    className="todo__status"
+                  />
+                </label>
+                <span data-cy="TodoTitle" className="todo__title">
+                  {tempTodo.title}
+                </span>
+                <button
+                  type="button"
+                  className="todo__remove"
+                  data-cy="TodoDelete"
+                  onClick={() => TodoDeleteButton(tempTodo.id)}
+                >
+                  ×
+                </button>
                 <div
-                  data-cy="Todo"
-                  key={item.id}
-                  className={classNames('todo', {
-                    completed: controlChecked.includes(item.id),
+                  data-cy="TodoLoader"
+                  className={classNames('modal overlay', {
+                    'is-active': tempTodo,
                   })}
                 >
-                  <label
-                    className="todo__status-label"
-                    onClick={() => {
-                      setControlChecked([item.id]);
-                    }}
-                  >
-                    <input
-                      data-cy="TodoStatus"
-                      type="checkbox"
-                      className="todo__status"
-                    />
-                  </label>
-
-                  <span data-cy="TodoTitle" className="todo__title">
-                    {item.title}
-                  </span>
-                  {/* Remove button appears only on hover */}
-                  <button
-                    type="button"
-                    className="todo__remove"
-                    data-cy="TodoDelete"
-                    onClick={() => TodoDeleteButton(item.id)}
-                  >
-                    ×
-                  </button>
-
-                  {/* overlay will cover the todo while it is being deleted or updated is-active*/}
-                  <div
-                    data-cy="TodoLoader"
-                    className={classNames('modal overlay', {
-                      'is-active': loadingTodo === item.id || loadingNewItem,
-                    })}
-                  >
-                    <div className="modal-background has-background-white-ter" />
-                    <div className="loader" />
-                  </div>
+                  <div className="modal-background has-background-white-ter" />
+                  <div className="loader" />
                 </div>
-              </>
-            ))}
+              </div>
+            </>
+          )}
 
-          {/* This todo is an active todo */}
-          <div data-cy="Todo" className="todo">
-            <label className="todo__status-label">
-              <input
-                data-cy="TodoStatus"
-                type="checkbox"
-                className="todo__status"
-              />
-            </label>
+          {todoItem.map(item => (
+            <>
+              <div
+                data-cy="Todo"
+                key={item.id}
+                className={classNames('todo', {
+                  // eslint-disable-next-line prettier/prettier
+                  completed: controlChecked.includes(item.id),
+                })}
+              >
+                <label
+                  className="todo__status-label"
+                  onClick={() => {
+                    setControlChecked([item.id]);
+                    setTodoItem(prevItems =>
+                      prevItems.map(todo =>
+                        todo.id === item.id
+                          ? { ...todo, completed: !todo.completed }
+                          : todo,
+                      ),
+                    );
+                  }}
+                >
+                  <input
+                    data-cy="TodoStatus"
+                    type="checkbox"
+                    className="todo__status"
+                  />
+                </label>
 
-            <span data-cy="TodoTitle" className="todo__title">
-              Not Completed Todo
-            </span>
-            <button type="button" className="todo__remove" data-cy="TodoDelete">
-              ×
-            </button>
+                <span data-cy="TodoTitle" className="todo__title">
+                  {item.title}
+                </span>
+                {/* Remove button appears only on hover */}
+                <button
+                  type="button"
+                  className="todo__remove"
+                  data-cy="TodoDelete"
+                  onClick={() => TodoDeleteButton(item.id)}
+                >
+                  ×
+                </button>
 
-            <div data-cy="TodoLoader" className="modal overlay">
-              <div className="modal-background has-background-white-ter" />
-              <div className="loader" />
-            </div>
-          </div>
-
-          {/* This todo is being edited */}
-          <div data-cy="Todo" className="todo">
-            <label className="todo__status-label">
-              <input
-                data-cy="TodoStatus"
-                type="checkbox"
-                className="todo__status"
-              />
-            </label>
-
-            {/* This form is shown instead of the title and remove button */}
-            <form>
-              <input
-                data-cy="TodoTitleField"
-                type="text"
-                className="todo__title-field"
-                placeholder="Empty todo will be deleted"
-                value="Todo is being edited now"
-              />
-            </form>
-
-            <div data-cy="TodoLoader" className="modal overlay">
-              <div className="modal-background has-background-white-ter" />
-              <div className="loader" />
-            </div>
-          </div>
-
-          {/* This todo is in loadind state */}
-          <div data-cy="Todo" className="todo">
-            <label className="todo__status-label">
-              <input
-                data-cy="TodoStatus"
-                type="checkbox"
-                className="todo__status"
-              />
-            </label>
-
-            <span data-cy="TodoTitle" className="todo__title">
-              Todo is being saved now
-            </span>
-
-            <button type="button" className="todo__remove" data-cy="TodoDelete">
-              ×
-            </button>
-
-            {/* 'is-active' class puts this modal on top of the todo */}
-            <div data-cy="TodoLoader" className="modal overlay is-active">
-              <div className="modal-background has-background-white-ter" />
-              <div className="loader" />
-            </div>
-          </div>
+                {/* overlay will cover the todo while it is being deleted or updated is-active*/}
+                <div
+                  data-cy="TodoLoader"
+                  className={classNames('modal overlay', {
+                    'is-active': loadingTodo === item.id || loadingNewItem,
+                  })}
+                >
+                  <div className="modal-background has-background-white-ter" />
+                  <div className="loader" />
+                </div>
+              </div>
+            </>
+          ))}
         </section>
 
         {/* Hide the footer if there are no todos */}
         <footer className="todoapp__footer" data-cy="Footer">
           <span className="todo-count" data-cy="TodosCounter">
-            {tempTodo !== null ? `${tempTodo} items left` : ''}
+            {tempTodo !== null ? `3 items left` : ''}
           </span>
 
           {/* Active link should have the 'selected' class */}
@@ -370,6 +381,9 @@ export const App: React.FC = () => {
             type="button"
             className="todoapp__clear-completed"
             data-cy="ClearCompletedButton"
+            onClick={() => {
+              forClearCompleted();
+            }}
           >
             Clear completed
           </button>
