@@ -6,6 +6,10 @@ import { UserWarning } from './UserWarning';
 import * as todosService from './api/todos';
 import { Todo } from './types/Todo';
 import classNames from 'classnames';
+import { Header } from './components/Header';
+import { TodoItem } from './components/TodoItem';
+import { TodoList } from './components/TodoList';
+import { Footer } from './components/Footer';
 
 export const App: React.FC = () => {
   const [creatNewTodos, setCreateNewTodos] = useState('');
@@ -186,212 +190,44 @@ export const App: React.FC = () => {
       <h1 className="todoapp__title">todos</h1>
 
       <div className="todoapp__content">
-        <header className="todoapp__header">
-          {/* this button should have active class only if all todos are completed */}
-          <button
-            type="button"
-            className="todoapp__toggle-all active"
-            data-cy="ToggleAllButton"
-          />
-
-          {/* Add a todo on form submit */}
-          <form
-            onSubmit={event => {
-              handleForm(event);
-              errorGetTodos();
-            }}
-          >
-            <input
-              data-cy="NewTodoField"
-              type="text"
-              className="todoapp__new-todo"
-              placeholder="What needs to be done?"
-              value={creatNewTodos}
-              onChange={event => {
-                setCreateNewTodos(event.target.value);
-              }}
-              ref={inputRef}
-              disabled={disabledInput}
-            />
-          </form>
-        </header>
+        <Header
+          handleForm={handleForm}
+          errorGetTodos={errorGetTodos}
+          setCreateNewTodos={setCreateNewTodos}
+          disabledInput={disabledInput}
+          createNewTodos={creatNewTodos}
+          inputRef={inputRef}
+        />
 
         <section className="todoapp__main" data-cy="TodoList">
-          {/* This is a completed todo */}
+          <TodoList
+            tempTodo={tempTodo}
+            controlChecked={controlChecked}
+            setControlChecked={setControlChecked}
+            setTodoItem={setTodoItem}
+            TodoDeleteButton={TodoDeleteButton}
+          />
 
-          {tempTodo && (
-            <>
-              <div
-                data-cy="Todo"
-                key={tempTodo.id}
-                className={classNames('todo', {
-                  completed: controlChecked.includes(tempTodo.id),
-                })}
-              >
-                <label
-                  className="todo__status-label"
-                  onClick={() => {
-                    setControlChecked([tempTodo.id]);
-                    setTodoItem(prevItems =>
-                      prevItems.map(todo =>
-                        todo.id === tempTodo.id
-                          ? { ...todo, completed: !todo.completed }
-                          : todo,
-                      ),
-                    );
-                  }}
-                >
-                  <input
-                    data-cy="TodoStatus"
-                    type="checkbox"
-                    className="todo__status"
-                  />
-                </label>
-                <span data-cy="TodoTitle" className="todo__title">
-                  {tempTodo.title}
-                </span>
-                <button
-                  type="button"
-                  className="todo__remove"
-                  data-cy="TodoDelete"
-                  onClick={() => TodoDeleteButton(tempTodo.id)}
-                >
-                  ×
-                </button>
-                <div
-                  data-cy="TodoLoader"
-                  className={classNames('modal overlay', {
-                    'is-active': tempTodo,
-                  })}
-                >
-                  <div className="modal-background has-background-white-ter" />
-                  <div className="loader" />
-                </div>
-              </div>
-            </>
-          )}
-
-          {todoItem.map(item => (
-            <>
-              <div
-                data-cy="Todo"
-                key={item.id}
-                className={classNames('todo', {
-                  // eslint-disable-next-line prettier/prettier
-                  completed: controlChecked.includes(item.id),
-                })}
-              >
-                <label
-                  className="todo__status-label"
-                  onClick={() => {
-                    setControlChecked([item.id]);
-                    setTodoItem(prevItems =>
-                      prevItems.map(todo =>
-                        todo.id === item.id
-                          ? { ...todo, completed: !todo.completed }
-                          : todo,
-                      ),
-                    );
-                  }}
-                >
-                  <input
-                    data-cy="TodoStatus"
-                    type="checkbox"
-                    className="todo__status"
-                  />
-                </label>
-
-                <span data-cy="TodoTitle" className="todo__title">
-                  {item.title}
-                </span>
-                {/* Remove button appears only on hover */}
-                <button
-                  type="button"
-                  className="todo__remove"
-                  data-cy="TodoDelete"
-                  onClick={() => TodoDeleteButton(item.id)}
-                >
-                  ×
-                </button>
-
-                {/* overlay will cover the todo while it is being deleted or updated is-active*/}
-                <div
-                  data-cy="TodoLoader"
-                  className={classNames('modal overlay', {
-                    'is-active': loadingTodo === item.id || loadingNewItem,
-                  })}
-                >
-                  <div className="modal-background has-background-white-ter" />
-                  <div className="loader" />
-                </div>
-              </div>
-            </>
-          ))}
+          <TodoItem
+            todoItem={todoItem}
+            controlChecked={controlChecked}
+            setControlChecked={setControlChecked}
+            setTodoItem={setTodoItem}
+            TodoDeleteButton={TodoDeleteButton}
+            loadingTodo={loadingTodo}
+            loadingNewItem={loadingNewItem}
+          />
         </section>
 
-        {/* Hide the footer if there are no todos */}
-        <footer className="todoapp__footer" data-cy="Footer">
-          <span className="todo-count" data-cy="TodosCounter">
-            {tempTodo !== null ? `3 items left` : ''}
-          </span>
-
-          {/* Active link should have the 'selected' class */}
-          <nav className="filter" data-cy="Filter">
-            <a
-              href="#/"
-              className={classNames('filter__link', {
-                selected: clickButtons === 'all',
-              })}
-              data-cy="FilterLinkAll"
-              onClick={() => {
-                setClickButtons('all');
-              }}
-            >
-              All
-            </a>
-            <a
-              href="#/active"
-              className={classNames('filter__link', {
-                selected: clickButtons === 'active',
-              })}
-              data-cy="FilterLinkActive"
-              onClick={() => {
-                setClickButtons('active');
-              }}
-            >
-              Active
-            </a>
-
-            <a
-              href="#/completed"
-              className={classNames('filter__link', {
-                selected: clickButtons === 'completed',
-              })}
-              data-cy="FilterLinkCompleted"
-              onClick={() => {
-                setClickButtons('completed');
-              }}
-            >
-              Completed
-            </a>
-          </nav>
-
-          {/* this button should be disabled if there are no completed todos */}
-          <button
-            type="button"
-            className="todoapp__clear-completed"
-            data-cy="ClearCompletedButton"
-            onClick={() => {
-              forClearCompleted();
-            }}
-          >
-            Clear completed
-          </button>
-        </footer>
+        <Footer
+          todoItem={todoItem}
+          tempTodo={tempTodo}
+          clickButtons={clickButtons}
+          setClickButtons={setClickButtons}
+          forClearCompleted={forClearCompleted}
+        />
       </div>
 
-      {/* DON'T use conditional rendering to hide the notification */}
-      {/* Add the 'hidden' class to hide the message smoothly */}
       <div
         data-cy="ErrorNotification"
         className={classNames('', {
@@ -407,7 +243,6 @@ export const App: React.FC = () => {
           })}
           onClick={() => setStateError('')}
         />
-        {/* show only one message at a time */}
         {errorState}
       </div>
     </div>

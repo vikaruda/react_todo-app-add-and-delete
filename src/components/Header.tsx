@@ -1,0 +1,51 @@
+import React, { Dispatch, SetStateAction } from 'react';
+
+interface HeaderProps {
+  handleForm: (event: React.FormEvent) => void;
+  errorGetTodos: () => void;
+  setCreateNewTodos: Dispatch<SetStateAction<string>>;
+  disabledInput: boolean;
+  createNewTodos: string;
+  inputRef: React.RefObject<HTMLInputElement>;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  handleForm,
+  errorGetTodos,
+  setCreateNewTodos,
+  disabledInput,
+  createNewTodos,
+  inputRef,
+}) => {
+  return (
+    <header className="todoapp__header">
+      {/* this button should have active class only if all todos are completed */}
+      <button
+        type="button"
+        className="todoapp__toggle-all active"
+        data-cy="ToggleAllButton"
+      />
+
+      {/* Add a todo on form submit */}
+      <form
+        onSubmit={event => {
+          handleForm(event);
+          errorGetTodos();
+        }}
+      >
+        <input
+          data-cy="NewTodoField"
+          type="text"
+          className="todoapp__new-todo"
+          placeholder="What needs to be done?"
+          value={createNewTodos}
+          onChange={event => {
+            setCreateNewTodos(event.target.value);
+          }}
+          ref={inputRef}
+          disabled={disabledInput}
+        />
+      </form>
+    </header>
+  );
+};
