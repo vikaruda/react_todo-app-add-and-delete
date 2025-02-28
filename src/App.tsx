@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import * as todosService from './api/todos';
 import { Todo } from './types/Todo';
@@ -15,11 +15,11 @@ export const App: React.FC = () => {
   const [creatNewTodos, setCreateNewTodos] = useState('');
   const [todoItem, setTodoItem] = useState<Todo[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [allTodos, getAllTodos] = useState<Todo[]>([]);
+  const [todosItem, getTodosItem] = useState<Todo[]>([]);
   const [errorState, setStateError] = useState('');
   const userId = todosService.USER_ID;
   const [controlChecked, setControlChecked] = useState<number[]>([]);
-  const [clickButtons, setClickButtons] = useState('');
+  const [filter, setFilter] = useState('');
   const [disabledInput, setDisabledInput] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
@@ -35,17 +35,20 @@ export const App: React.FC = () => {
       .catch(() => setStateError('Your error message'));
   }, []);
 
-  useEffect(() => {
-    let filterItems = [...todoItem];
-
-    if (clickButtons === 'active') {
-      filterItems = filterItems.filter(todo => !todo.completed);
-    } else if (clickButtons === 'completed') {
-      filterItems = filterItems.filter(todo => todo.completed);
+  const getFilteredTodos = () => {
+    if (filter === 'active') {
+      return todoItem.filter(todo => !todo.completed);
     }
 
-    setTodoItem(filterItems);
-  }, [clickButtons]);
+    if (filter === 'completed') {
+      return todoItem.filter(todo => todo.completed);
+    }
+
+    return todoItem;
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const filteredTodos = getFilteredTodos();
 
   const handleForm = (event: React.FormEvent) => {
     setDisabledInput(true);
@@ -98,7 +101,6 @@ export const App: React.FC = () => {
     setTodoItem(prev => prev.filter(todo => !completedIds.includes(todo.id)));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function errorGetTodos() {
     setStateError('');
 
@@ -110,37 +112,15 @@ export const App: React.FC = () => {
 
       return;
     }
-
-    setTimeout(() => {}, 3000);
-
-    todosService
-      .getTodos()
-      .then(data => {
-        getAllTodos(data);
-      })
-      .catch(error => {
-        setStateError('Unable to load todos');
-        throw error;
-      });
-
-    setTimeout(() => {}, 3000);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const TodoDeleteButton = (usersId: number) => {
-    setDeleteIds(prevIds => [...prevIds, userId]);
+  const handleTodoDelete = (usersId: number) => {
+    setDeleteIds(prevIds => [...prevIds, usersId]);
     todosService
       .deleteTodos(usersId)
       .then(() => {
-        todosService
-          .getTodos()
-          .then(updatedTodos => {
-            setTodoItem(updatedTodos);
-          })
-          .catch(() => {
-            setStateError('Unable updated todos');
-            setTimeout(() => setStateError(''), 3000);
-          });
+        setTodoItem(prevTodos => prevTodos.filter(todo => todo.id !== usersId));
       })
       .catch(() => {
         setStateError('Unable to delete a todo ');
@@ -168,18 +148,9 @@ export const App: React.FC = () => {
       });
   };
 
-  useEffect(() => {
-    let filterItems = [...todoItem];
-
-    if (clickButtons === 'active') {
-      filterItems = filterItems.filter(todo => !todo.completed);
-    } else if (clickButtons === 'completed') {
-      filterItems = filterItems.filter(todo => todo.completed);
-    } else if (clickButtons === 'clearCompleted') {
-    }
-
-    setTodoItem(filterItems);
-  }, [clickButtons]);
+  const activeTodosCount = useMemo(() => {
+    return todoItem.filter(todo => !todo.completed).length;
+  }, [todoItem]);
 
   if (!todosService.USER_ID) {
     return <UserWarning />;
@@ -201,11 +172,12 @@ export const App: React.FC = () => {
 
         <section className="todoapp__main" data-cy="TodoList">
           <TodoList
+            todos={todosItem}
             tempTodo={tempTodo}
             controlChecked={controlChecked}
             setControlChecked={setControlChecked}
             setTodoItem={setTodoItem}
-            TodoDeleteButton={TodoDeleteButton}
+            handleTodoDelete={handleTodoDelete}
           />
 
           <TodoItem
@@ -213,7 +185,7 @@ export const App: React.FC = () => {
             controlChecked={controlChecked}
             setControlChecked={setControlChecked}
             setTodoItem={setTodoItem}
-            TodoDeleteButton={TodoDeleteButton}
+            handleTodoDelete={handleTodoDelete}
             loadingTodo={loadingTodo}
             loadingNewItem={loadingNewItem}
           />
@@ -221,10 +193,10 @@ export const App: React.FC = () => {
 
         <Footer
           todoItem={todoItem}
-          tempTodo={tempTodo}
-          clickButtons={clickButtons}
-          setClickButtons={setClickButtons}
+          filter={filter}
+          setFilter={setFilter}
           forClearCompleted={forClearCompleted}
+          activeTodosCount={activeTodosCount}
         />
       </div>
 

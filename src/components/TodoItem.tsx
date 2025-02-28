@@ -8,7 +8,7 @@ interface TodoI {
   controlChecked: number[];
   setControlChecked: Dispatch<SetStateAction<number[]>>;
   setTodoItem: Dispatch<SetStateAction<Todo[]>>;
-  TodoDeleteButton: (usersId: number) => void;
+  handleTodoDelete: (usersId: number) => void;
   loadingTodo: number | null;
   loadingNewItem: boolean;
 }
@@ -18,7 +18,7 @@ export const TodoItem: React.FC<TodoI> = ({
   controlChecked,
   setControlChecked,
   setTodoItem,
-  TodoDeleteButton,
+  handleTodoDelete,
   loadingTodo,
   loadingNewItem,
 }) => {
@@ -55,7 +55,7 @@ export const TodoItem: React.FC<TodoI> = ({
               type="checkbox"
               className="todo__status"
               checked={controlChecked.includes(item.id)}
-              onChange={() => {}} // Потрібен для уникнення warning
+              onChange={() => {}}
             />
           </label>
 
@@ -67,7 +67,7 @@ export const TodoItem: React.FC<TodoI> = ({
             type="button"
             className="todo__remove"
             data-cy="TodoDelete"
-            onClick={() => TodoDeleteButton(item.id)}
+            onClick={() => handleTodoDelete(item.id)}
           >
             ×
           </button>

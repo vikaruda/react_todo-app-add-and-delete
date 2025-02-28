@@ -4,18 +4,18 @@ import classNames from 'classnames';
 
 interface InterfaceFooter {
   todoItem: Todo[];
-  tempTodo: Todo | null;
-  clickButtons: string;
-  setClickButtons: React.Dispatch<React.SetStateAction<string>>;
+  filter: string;
+  setFilter: React.Dispatch<React.SetStateAction<string>>;
   forClearCompleted: () => void;
+  activeTodosCount: number;
 }
 
 export const Footer: React.FC<InterfaceFooter> = ({
   todoItem,
-  tempTodo,
-  clickButtons,
-  setClickButtons,
+  filter,
+  setFilter,
   forClearCompleted,
+  activeTodosCount,
 }) => {
   return (
     <footer
@@ -24,7 +24,9 @@ export const Footer: React.FC<InterfaceFooter> = ({
       data-cy="Footer"
     >
       <span className="todo-count" data-cy="TodosCounter">
-        {tempTodo !== null ? `3 items left` : ''}
+        {activeTodosCount > 0
+          ? `${activeTodosCount} items left`
+          : 'No items left'}
       </span>
 
       {/* Active link should have the 'selected' class */}
@@ -32,11 +34,11 @@ export const Footer: React.FC<InterfaceFooter> = ({
         <a
           href="#/"
           className={classNames('filter__link', {
-            selected: clickButtons === 'all',
+            selected: filter === 'all',
           })}
           data-cy="FilterLinkAll"
           onClick={() => {
-            setClickButtons('all');
+            setFilter('all');
           }}
         >
           All
@@ -44,11 +46,11 @@ export const Footer: React.FC<InterfaceFooter> = ({
         <a
           href="#/active"
           className={classNames('filter__link', {
-            selected: clickButtons === 'active',
+            selected: filter === 'active',
           })}
           data-cy="FilterLinkActive"
           onClick={() => {
-            setClickButtons('active');
+            setFilter('active');
           }}
         >
           Active
@@ -57,11 +59,11 @@ export const Footer: React.FC<InterfaceFooter> = ({
         <a
           href="#/completed"
           className={classNames('filter__link', {
-            selected: clickButtons === 'completed',
+            selected: filter === 'completed',
           })}
           data-cy="FilterLinkCompleted"
           onClick={() => {
-            setClickButtons('completed');
+            setFilter('completed');
           }}
         >
           Completed
