@@ -4,7 +4,6 @@ interface HeaderProps {
   handleForm: (event: React.FormEvent) => void;
   errorGetTodos: () => void;
   setCreateNewTodos: Dispatch<SetStateAction<string>>;
-  disabledInput: boolean;
   createNewTodos: string;
   inputRef: React.RefObject<HTMLInputElement>;
 }
@@ -13,7 +12,6 @@ export const Header: React.FC<HeaderProps> = ({
   handleForm,
   errorGetTodos,
   setCreateNewTodos,
-  disabledInput,
   createNewTodos,
   inputRef,
 }) => {
@@ -43,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
             setCreateNewTodos(event.target.value);
           }}
           ref={inputRef}
-          disabled={disabledInput}
+          autoFocus
         />
       </form>
     </header>

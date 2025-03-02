@@ -1,88 +1,74 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
-import classNames from 'classnames';
 import React, { Dispatch, SetStateAction } from 'react';
 import { Todo } from '../types/Todo';
+import classNames from 'classnames';
+import { TodoLoader } from './TodoLoader';
 
-interface TodoI {
-  todoItem: Todo[];
+interface TodoIt {
+  tempTodo: Todo;
   controlChecked: number[];
   setControlChecked: Dispatch<SetStateAction<number[]>>;
   setTodoItem: Dispatch<SetStateAction<Todo[]>>;
   handleTodoDelete: (usersId: number) => void;
-  loadingTodo: number | null;
-  loadingNewItem: boolean;
+  arrTodos: number[];
+  delLoader: number | null;
 }
 
-export const TodoItem: React.FC<TodoI> = ({
-  todoItem,
+export const TodoItem: React.FC<TodoIt> = ({
+  tempTodo,
   controlChecked,
   setControlChecked,
   setTodoItem,
   handleTodoDelete,
-  loadingTodo,
-  loadingNewItem,
+  arrTodos,
 }) => {
+  const toggleTodo = (id: number) => {
+    setControlChecked(prev =>
+      prev.includes(id) ? prev.filter(todoId => todoId !== id) : [...prev, id],
+    );
+
+    setTodoItem(prevItems =>
+      prevItems.map(todo =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
+      ),
+    );
+  };
+
   return (
-    <>
-      {todoItem.map(item => (
-        <div
-          data-cy="Todo"
-          key={item.id}
-          className={classNames('todo', {
-            completed: controlChecked.includes(item.id),
-          })}
-        >
-          <label
-            className="todo__status-label"
-            onClick={() => {
-              setControlChecked(prev =>
-                prev.includes(item.id)
-                  ? prev.filter(id => id !== item.id)
-                  : [...prev, item.id],
-              );
+    <div
+      data-cy="Todo"
+      key={tempTodo.id}
+      className={classNames('todo', {
+        completed: controlChecked.includes(tempTodo.id),
+      })}
+    >
+      <label
+        className="todo__status-label"
+        aria-label="Name"
+        onClick={() => toggleTodo(tempTodo.id)}
+      >
+        <input
+          data-cy="TodoStatus"
+          type="checkbox"
+          className="todo__status"
+          checked={controlChecked.includes(tempTodo.id)}
+          readOnly
+        />
+      </label>
 
-              setTodoItem(prevItems =>
-                prevItems.map(todo =>
-                  todo.id === item.id
-                    ? { ...todo, completed: !todo.completed }
-                    : todo,
-                ),
-              );
-            }}
-          >
-            <input
-              data-cy="TodoStatus"
-              type="checkbox"
-              className="todo__status"
-              checked={controlChecked.includes(item.id)}
-              onChange={() => {}}
-            />
-          </label>
+      <span data-cy="TodoTitle" className="todo__title">
+        {tempTodo.title}
+      </span>
 
-          <span data-cy="TodoTitle" className="todo__title">
-            {item.title}
-          </span>
+      <button
+        type="button"
+        className="todo__remove"
+        data-cy="TodoDelete"
+        onClick={() => handleTodoDelete(tempTodo.id)}
+      >
+        ×
+      </button>
 
-          <button
-            type="button"
-            className="todo__remove"
-            data-cy="TodoDelete"
-            onClick={() => handleTodoDelete(item.id)}
-          >
-            ×
-          </button>
-
-          <div
-            data-cy="TodoLoader"
-            className={classNames('modal overlay', {
-              'is-active': loadingTodo === item.id || loadingNewItem,
-            })}
-          >
-            <div className="modal-background has-background-white-ter" />
-            <div className="loader" />
-          </div>
-        </div>
-      ))}
-    </>
+      <TodoLoader isActive={arrTodos.includes(tempTodo.id)} />
+    </div>
   );
 };

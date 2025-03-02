@@ -38,7 +38,7 @@ export const Footer: React.FC<InterfaceFooter> = ({
           })}
           data-cy="FilterLinkAll"
           onClick={() => {
-            setFilter('all');
+            setFilter('');
           }}
         >
           All

@@ -7,26 +7,20 @@ import * as todosService from './api/todos';
 import { Todo } from './types/Todo';
 import classNames from 'classnames';
 import { Header } from './components/Header';
-import { TodoItem } from './components/TodoItem';
 import { TodoList } from './components/TodoList';
 import { Footer } from './components/Footer';
 
 export const App: React.FC = () => {
   const [creatNewTodos, setCreateNewTodos] = useState('');
   const [todoItem, setTodoItem] = useState<Todo[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [todosItem, getTodosItem] = useState<Todo[]>([]);
   const [errorState, setStateError] = useState('');
   const userId = todosService.USER_ID;
   const [controlChecked, setControlChecked] = useState<number[]>([]);
   const [filter, setFilter] = useState('');
-  const [disabledInput, setDisabledInput] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [tempTodo, setTempTodo] = useState<Todo | null>(null);
-  const [loadingTodo, setLoadingTodo] = useState<number | null>(null);
   const [loadingNewItem, setLoadingNewItem] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [deleteIds, setDeleteIds] = useState<number[]>([]);
+  const [arrTodos, setArrTodos] = useState<number[]>([]);
+  const [delLoader, setDelLoader] = useState<number | null>(null);
 
   useEffect(() => {
     todosService
@@ -47,11 +41,9 @@ export const App: React.FC = () => {
     return todoItem;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const filteredTodos = getFilteredTodos();
 
   const handleForm = (event: React.FormEvent) => {
-    setDisabledInput(true);
     event.preventDefault();
 
     if (creatNewTodos.trim() === '') {
@@ -64,13 +56,9 @@ export const App: React.FC = () => {
       completed: false,
     };
 
-    // Додаємо тимчасовий todo в кінець списку
     const tempTodoItem = { ...newTodo, id: Date.now() };
 
-    setTempTodo(tempTodoItem);
     setTodoItem(prev => [...prev, tempTodoItem]);
-
-    setLoadingTodo(Date.now());
     setLoadingNewItem(true);
 
     todosService
@@ -79,8 +67,10 @@ export const App: React.FC = () => {
         setTodoItem(prev =>
           prev.map(todo => (todo.id === tempTodoItem.id ? createdTodo : todo)),
         );
-        setTempTodo(null); // Очищаємо tempTodo після успішного додавання
         setCreateNewTodos('');
+
+        setArrTodos(prevItem => [...prevItem, createdTodo.id]);
+
         setTimeout(() => {
           inputRef.current?.focus();
         }, 0);
@@ -89,8 +79,10 @@ export const App: React.FC = () => {
         setStateError('Unable to add a todo');
       })
       .finally(() => {
-        setDisabledInput(false);
         setLoadingNewItem(false);
+        setTimeout(() => {
+          setArrTodos([]);
+        }, 1000);
       });
   };
 
@@ -99,6 +91,12 @@ export const App: React.FC = () => {
     const completedIds = completedTodo.map(todo => todo.id);
 
     setTodoItem(prev => prev.filter(todo => !completedIds.includes(todo.id)));
+
+    completedIds.forEach(id => {
+      todosService.deleteTodos(id).catch(() => {
+        setTimeout(() => setStateError(''), 3000);
+      });
+    });
   };
 
   function errorGetTodos() {
@@ -114,21 +112,26 @@ export const App: React.FC = () => {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleTodoDelete = (usersId: number) => {
-    setDeleteIds(prevIds => [...prevIds, usersId]);
+    setArrTodos(prevItem => [...prevItem, usersId]);
     todosService
       .deleteTodos(usersId)
       .then(() => {
         setTodoItem(prevTodos => prevTodos.filter(todo => todo.id !== usersId));
+        setDelLoader(usersId);
       })
       .catch(() => {
         setStateError('Unable to delete a todo ');
         setTimeout(() => setStateError(''), 3000);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setDelLoader(null);
+          setArrTodos(prev => prev.filter(id => id !== usersId));
+        }, 1000);
       });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updatedPost = (updatedPosts: Todo) => {
     todosService
       .updatePost(updatedPosts)
@@ -165,29 +168,20 @@ export const App: React.FC = () => {
           handleForm={handleForm}
           errorGetTodos={errorGetTodos}
           setCreateNewTodos={setCreateNewTodos}
-          disabledInput={disabledInput}
           createNewTodos={creatNewTodos}
           inputRef={inputRef}
         />
 
         <section className="todoapp__main" data-cy="TodoList">
           <TodoList
-            todos={todosItem}
-            tempTodo={tempTodo}
+            todos={filteredTodos}
+            tempTodo={null}
             controlChecked={controlChecked}
             setControlChecked={setControlChecked}
             setTodoItem={setTodoItem}
             handleTodoDelete={handleTodoDelete}
-          />
-
-          <TodoItem
-            todoItem={todoItem}
-            controlChecked={controlChecked}
-            setControlChecked={setControlChecked}
-            setTodoItem={setTodoItem}
-            handleTodoDelete={handleTodoDelete}
-            loadingTodo={loadingTodo}
-            loadingNewItem={loadingNewItem}
+            arrTodos={arrTodos}
+            delLoader={delLoader}
           />
         </section>
 
@@ -210,7 +204,6 @@ export const App: React.FC = () => {
           data-cy="HideErrorButton"
           type="button"
           className={classNames('', {
-            // eslint-disable-next-line prettier/prettier
             'delete hidden': errorState,
           })}
           onClick={() => setStateError('')}
