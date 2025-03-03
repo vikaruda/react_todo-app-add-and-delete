@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable max-len */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
@@ -27,8 +28,19 @@ export const App: React.FC = () => {
     todosService
       .getTodos()
       .then(setTodoItem)
-      .catch(() => setStateError('Your error message'));
+      .catch(() => setStateError('Unable to load todos'));
   }, []);
+
+  useEffect(() => {
+    if (errorState) {
+      const timer = setTimeout(() => {
+        setStateError(''); // Clear the error message after 3 seconds
+      }, 3000);
+
+      return () => clearTimeout(timer); // Clean up timer if component unmounts
+    }
+  }, [errorState]);
+
 
   const getFilteredTodos = () => {
     if (filter === 'active') {
@@ -172,6 +184,7 @@ export const App: React.FC = () => {
           setCreateNewTodos={setCreateNewTodos}
           createNewTodos={creatNewTodos}
           inputRef={inputRef}
+          loadingNewItem={loadingNewItem}
         />
 
         <section className="todoapp__main" data-cy="TodoList">
@@ -203,16 +216,14 @@ export const App: React.FC = () => {
         className={classNames(
           'notification is-danger is-light has-text-weight-normal',
           {
-            hidden: !errorState,
+            'hidden': !errorState,
           },
         )}
       >
         <button
           data-cy="HideErrorButton"
           type="button"
-          className={classNames('', {
-            'delete hidden': errorState,
-          })}
+          className="delete"
           onClick={() => setStateError('')}
         />
         {errorState}

@@ -20,6 +20,7 @@ export const TodoItem: React.FC<TodoIt> = ({
   setTodoItem,
   handleTodoDelete,
   arrTodos,
+  delLoader,
 }) => {
   const toggleTodo = (id: number) => {
     setControlChecked(prev =>
@@ -38,19 +39,21 @@ export const TodoItem: React.FC<TodoIt> = ({
       data-cy="Todo"
       key={tempTodo.id}
       className={classNames('todo', {
-        completed: controlChecked.includes(tempTodo.id),
+        completed: tempTodo.completed,
       })}
     >
       <label
         className="todo__status-label"
-        aria-label="Name"
+        htmlFor={`todoStatus-${tempTodo.id}`}
         onClick={() => toggleTodo(tempTodo.id)}
+        aria-label="Name"
       >
         <input
+          id={`todoStatus-${tempTodo.id}`}
           data-cy="TodoStatus"
           type="checkbox"
           className="todo__status"
-          checked={controlChecked.includes(tempTodo.id)}
+          checked={tempTodo.completed}
           readOnly
         />
       </label>
@@ -68,7 +71,7 @@ export const TodoItem: React.FC<TodoIt> = ({
         ×
       </button>
 
-      <TodoLoader isActive={arrTodos.includes(tempTodo.id)} />
+      <TodoLoader loadingTodoId={delLoader} todoId={tempTodo.id} />
     </div>
   );
 };

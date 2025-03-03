@@ -17,6 +17,12 @@ export const Footer: React.FC<InterfaceFooter> = ({
   forClearCompleted,
   activeTodosCount,
 }) => {
+  const filters = [
+    { label: 'All', value: '' },
+    { label: 'Active', value: 'active' },
+    { label: 'Completed', value: 'completed' },
+  ];
+
   return (
     <footer
       style={{ display: todoItem.length ? '' : 'none' }}
@@ -26,48 +32,24 @@ export const Footer: React.FC<InterfaceFooter> = ({
       <span className="todo-count" data-cy="TodosCounter">
         {activeTodosCount > 0
           ? `${activeTodosCount} items left`
-          : 'No items left'}
+          : '0 items left'}
       </span>
 
       {/* Active link should have the 'selected' class */}
       <nav className="filter" data-cy="Filter">
-        <a
-          href="#/"
-          className={classNames('filter__link', {
-            selected: filter === 'all',
-          })}
-          data-cy="FilterLinkAll"
-          onClick={() => {
-            setFilter('');
-          }}
-        >
-          All
-        </a>
-        <a
-          href="#/active"
-          className={classNames('filter__link', {
-            selected: filter === 'active',
-          })}
-          data-cy="FilterLinkActive"
-          onClick={() => {
-            setFilter('active');
-          }}
-        >
-          Active
-        </a>
-
-        <a
-          href="#/completed"
-          className={classNames('filter__link', {
-            selected: filter === 'completed',
-          })}
-          data-cy="FilterLinkCompleted"
-          onClick={() => {
-            setFilter('completed');
-          }}
-        >
-          Completed
-        </a>
+        {filters.map(({ label, value }) => (
+          <a
+            key={value}
+            href={`#/${value}`}
+            className={classNames('filter__link', {
+              selected: filter === value,
+            })}
+            data-cy={`FilterLink${label}`}
+            onClick={() => setFilter(value)}
+          >
+            {label}
+          </a>
+        ))}
       </nav>
 
       {/* this button should be disabled if there are no completed todos */}
@@ -75,9 +57,8 @@ export const Footer: React.FC<InterfaceFooter> = ({
         type="button"
         className="todoapp__clear-completed"
         data-cy="ClearCompletedButton"
-        onClick={() => {
-          forClearCompleted();
-        }}
+        onClick={forClearCompleted}
+        disabled={todoItem.every(todo => !todo.completed)}
       >
         Clear completed
       </button>

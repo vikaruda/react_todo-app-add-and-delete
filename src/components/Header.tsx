@@ -6,6 +6,7 @@ interface HeaderProps {
   setCreateNewTodos: Dispatch<SetStateAction<string>>;
   createNewTodos: string;
   inputRef: React.RefObject<HTMLInputElement>;
+  loadingNewItem: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   setCreateNewTodos,
   createNewTodos,
   inputRef,
+  loadingNewItem,
 }) => {
   return (
     <header className="todoapp__header">
@@ -42,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
           }}
           ref={inputRef}
           autoFocus
+          disabled={loadingNewItem}
         />
       </form>
     </header>
