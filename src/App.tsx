@@ -18,6 +18,7 @@ export const App: React.FC = () => {
   const [controlChecked, setControlChecked] = useState<number[]>([]);
   const [filter, setFilter] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingNewItem, setLoadingNewItem] = useState(false);
   const [arrTodos, setArrTodos] = useState<number[]>([]);
   const [delLoader, setDelLoader] = useState<number | null>(null);
@@ -132,6 +133,7 @@ export const App: React.FC = () => {
       });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updatedPost = (updatedPosts: Todo) => {
     todosService
       .updatePost(updatedPosts)
@@ -185,20 +187,25 @@ export const App: React.FC = () => {
           />
         </section>
 
-        <Footer
-          todoItem={todoItem}
-          filter={filter}
-          setFilter={setFilter}
-          forClearCompleted={forClearCompleted}
-          activeTodosCount={activeTodosCount}
-        />
+        {todoItem.length > 0 && (
+          <Footer
+            todoItem={todoItem}
+            filter={filter}
+            setFilter={setFilter}
+            forClearCompleted={forClearCompleted}
+            activeTodosCount={activeTodosCount}
+          />
+        )}
       </div>
 
       <div
         data-cy="ErrorNotification"
-        className={classNames('', {
-          'notification is-danger is-light has-text-weight-normal': errorState,
-        })}
+        className={classNames(
+          'notification is-danger is-light has-text-weight-normal',
+          {
+            hidden: !errorState,
+          },
+        )}
       >
         <button
           data-cy="HideErrorButton"
