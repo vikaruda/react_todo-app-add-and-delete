@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import * as todosService from './api/todos';
 import { Todo } from './types/Todo';
@@ -23,6 +23,7 @@ export const App: React.FC = () => {
   const [loadingNewItem, setLoadingNewItem] = useState(false);
   const [arrTodos, setArrTodos] = useState<number[]>([]);
   const [delLoader, setDelLoader] = useState<number | null>(null);
+
 
   useEffect(() => {
     todosService
@@ -71,15 +72,16 @@ export const App: React.FC = () => {
 
     const tempTodoItem = { ...newTodo, id: Date.now() };
 
-    // Спочатку додаємо новий todo без оновлення activeTodosCount
+    // Add the new todo to the UI immediately (optimistic update)
     setTodoItem(prev => [...prev, tempTodoItem]);
     setArrTodos(prevItem => [...prevItem, tempTodoItem.id]);
     setLoadingNewItem(true);
 
+    // Make API call to create the todo
     todosService
       .createPost(newTodo)
       .then(createdTodo => {
-        // Оновлюємо список todo після отримання успішної відповіді
+        // Update the UI with the created todo only if the API call succeeds
         setTodoItem(prev =>
           prev.map(todo => (todo.id === tempTodoItem.id ? createdTodo : todo)),
         );
@@ -92,15 +94,13 @@ export const App: React.FC = () => {
         setStateError('Unable to add a todo');
       })
       .finally(() => {
-        // Лічильник оновлюється лише після того, як todo створене
         setLoadingNewItem(false);
+        // Remove the temporary item after the API call completes
         setTimeout(() => {
-          setArrTodos([]); // Очищаємо тимчасовий масив через 1 секунду
+          setArrTodos([]); // Clear the temporary array after 1 second
         }, 1000);
       });
   };
-
-
 
   const forClearCompleted = () => {
     const completedTodo = todoItem.filter(todo => todo.completed);
@@ -168,9 +168,7 @@ export const App: React.FC = () => {
       });
   };
 
-  const activeTodosCount = useMemo(() => {
-    return todoItem.filter(todo => !todo.completed).length;
-  }, [todoItem]);
+  const activeTodosCount = todoItem.filter(todo => !todo.completed).length;
 
   if (!todosService.USER_ID) {
     return <UserWarning />;

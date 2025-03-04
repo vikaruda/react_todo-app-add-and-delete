@@ -16,7 +16,6 @@ interface TodoIt {
 
 export const TodoItem: React.FC<TodoIt> = ({
   tempTodo,
-  controlChecked,
   setControlChecked,
   setTodoItem,
   handleTodoDelete,

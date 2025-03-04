@@ -1,4 +1,4 @@
-import classNames from "classnames";
+import classNames from 'classnames';
 
 export const TodoLoader: React.FC<{ isActive: boolean }> = ({ isActive }) => {
   return (
