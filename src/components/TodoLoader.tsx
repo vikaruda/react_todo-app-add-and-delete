@@ -1,16 +1,11 @@
-import classNames from 'classnames';
+import classNames from "classnames";
 
-interface Loader {
-  loadingTodoId: number | null;
-  todoId: number;
-}
-
-export const TodoLoader: React.FC<Loader> = ({ loadingTodoId, todoId }) => {
+export const TodoLoader: React.FC<{ isActive: boolean }> = ({ isActive }) => {
   return (
     <div
       data-cy="TodoLoader"
       className={classNames('modal overlay', {
-        'is-active': loadingTodoId === todoId,
+        'is-active': isActive,
       })}
     >
       <div className="modal-background has-background-white-ter" />

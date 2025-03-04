@@ -71,33 +71,36 @@ export const App: React.FC = () => {
 
     const tempTodoItem = { ...newTodo, id: Date.now() };
 
+    // Спочатку додаємо новий todo без оновлення activeTodosCount
     setTodoItem(prev => [...prev, tempTodoItem]);
+    setArrTodos(prevItem => [...prevItem, tempTodoItem.id]);
     setLoadingNewItem(true);
 
     todosService
       .createPost(newTodo)
       .then(createdTodo => {
+        // Оновлюємо список todo після отримання успішної відповіді
         setTodoItem(prev =>
           prev.map(todo => (todo.id === tempTodoItem.id ? createdTodo : todo)),
         );
         setCreateNewTodos('');
-
-        setArrTodos(prevItem => [...prevItem, createdTodo.id]);
-
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 0);
+        setArrTodos(prevItem =>
+          prevItem.map(id => (id === tempTodoItem.id ? createdTodo.id : id)),
+        );
       })
       .catch(() => {
         setStateError('Unable to add a todo');
       })
       .finally(() => {
+        // Лічильник оновлюється лише після того, як todo створене
         setLoadingNewItem(false);
         setTimeout(() => {
-          setArrTodos([]);
+          setArrTodos([]); // Очищаємо тимчасовий масив через 1 секунду
         }, 1000);
       });
   };
+
+
 
   const forClearCompleted = () => {
     const completedTodo = todoItem.filter(todo => todo.completed);
@@ -126,7 +129,7 @@ export const App: React.FC = () => {
   }
 
   const handleTodoDelete = (usersId: number) => {
-    setArrTodos(prevItem => [...prevItem, usersId]);
+    setArrTodos(prevItem => prevItem.filter(id => id !== usersId));
     todosService
       .deleteTodos(usersId)
       .then(() => {

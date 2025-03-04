@@ -1,3 +1,4 @@
+// TodoItem.tsx
 import React, { Dispatch, SetStateAction } from 'react';
 import { Todo } from '../types/Todo';
 import classNames from 'classnames';
@@ -20,7 +21,6 @@ export const TodoItem: React.FC<TodoIt> = ({
   setTodoItem,
   handleTodoDelete,
   arrTodos,
-  delLoader,
 }) => {
   const toggleTodo = (id: number) => {
     setControlChecked(prev =>
@@ -34,44 +34,46 @@ export const TodoItem: React.FC<TodoIt> = ({
     );
   };
 
+  const isLoading = arrTodos.includes(tempTodo.id);
+
   return (
-    <div
-      data-cy="Todo"
-      key={tempTodo.id}
-      className={classNames('todo', {
-        completed: tempTodo.completed,
-      })}
-    >
-      <label
-        className="todo__status-label"
-        htmlFor={`todoStatus-${tempTodo.id}`}
-        onClick={() => toggleTodo(tempTodo.id)}
-        aria-label="Name"
+    <div>
+      <div
+        data-cy="Todo"
+        key={tempTodo.id}
+        className={classNames('todo', {
+          completed: tempTodo.completed,
+        })}
       >
-        <input
-          id={`todoStatus-${tempTodo.id}`}
-          data-cy="TodoStatus"
-          type="checkbox"
-          className="todo__status"
-          checked={tempTodo.completed}
-          readOnly
-        />
-      </label>
+        <label
+          className="todo__status-label"
+          aria-label="Name"
+          onClick={() => toggleTodo(tempTodo.id)}
+        >
+          <input
+            data-cy="TodoStatus"
+            type="checkbox"
+            className="todo__status"
+            checked={tempTodo.completed}
+            readOnly
+          />
+        </label>
 
-      <span data-cy="TodoTitle" className="todo__title">
-        {tempTodo.title}
-      </span>
+        <span data-cy="TodoTitle" className="todo__title">
+          {tempTodo.title}
+        </span>
 
-      <button
-        type="button"
-        className="todo__remove"
-        data-cy="TodoDelete"
-        onClick={() => handleTodoDelete(tempTodo.id)}
-      >
-        ×
-      </button>
+        <button
+          type="button"
+          className="todo__remove"
+          data-cy="TodoDelete"
+          onClick={() => handleTodoDelete(tempTodo.id)}
+        >
+          ×
+        </button>
 
-      <TodoLoader loadingTodoId={delLoader} todoId={tempTodo.id} />
+        <TodoLoader isActive={isLoading} />
+      </div>
     </div>
   );
 };
