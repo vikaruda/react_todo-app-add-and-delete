@@ -18,7 +18,7 @@ export const App: React.FC = () => {
   const [errorState, setStateError] = useState('');
   const userId = todosService.USER_ID;
   const [controlChecked, setControlChecked] = useState<number[]>([]);
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState(TodoFilter.All);
   const inputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingNewItem, setLoadingNewItem] = useState(false);

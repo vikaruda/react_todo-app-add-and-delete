@@ -6,7 +6,7 @@ import { TodoFilter } from '../types/FilterEnum';
 interface InterfaceFooter {
   todoItem: Todo[];
   filter: string;
-  setFilter: React.Dispatch<React.SetStateAction<string>>;
+  setFilter: React.Dispatch<React.SetStateAction<TodoFilter>>;
   forClearCompleted: () => void;
   activeTodosCount: number;
 }
@@ -18,33 +18,34 @@ export const Footer: React.FC<InterfaceFooter> = ({
   forClearCompleted,
   activeTodosCount,
 }) => {
-  const filters = Object.entries(TodoFilter).map(([key, value]) => ({
-    label: key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
-    value,
-  }));
-
   return (
-    <footer className="todoapp__footer" data-cy="Footer">
+    <footer
+      style={{ display: todoItem.length ? '' : 'none' }}
+      className="todoapp__footer"
+      data-cy="Footer"
+    >
       <span className="todo-count" data-cy="TodosCounter">
         {`${activeTodosCount} items left`}
       </span>
 
+      {/* Active link should have the 'selected' class */}
       <nav className="filter" data-cy="Filter">
-        {filters.map(({ label, value }) => (
+        {Object.values(TodoFilter).map(value => (
           <a
             key={value}
             href={`#/${value}`}
             className={classNames('filter__link', {
               selected: filter === value,
             })}
-            data-cy={`FilterLink${label}`}
+            data-cy={`FilterLink${value}`}
             onClick={() => setFilter(value)}
           >
-            {label}
+            {value}
           </a>
         ))}
       </nav>
 
+      {/* this button should be disabled if there are no completed todos */}
       <button
         type="button"
         className="todoapp__clear-completed"
