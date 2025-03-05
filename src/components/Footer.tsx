@@ -1,6 +1,7 @@
 import React from 'react';
 import { Todo } from '../types/Todo';
 import classNames from 'classnames';
+import { TodoFilter } from '../types/FilterEnum';
 
 interface InterfaceFooter {
   todoItem: Todo[];
@@ -17,25 +18,17 @@ export const Footer: React.FC<InterfaceFooter> = ({
   forClearCompleted,
   activeTodosCount,
 }) => {
-  const filters = [
-    { label: 'All', value: '' },
-    { label: 'Active', value: 'active' },
-    { label: 'Completed', value: 'completed' },
-  ];
+  const filters = Object.entries(TodoFilter).map(([key, value]) => ({
+    label: key.charAt(0).toUpperCase() + key.slice(1).toLowerCase(),
+    value,
+  }));
 
   return (
-    <footer
-      style={{ display: todoItem.length ? '' : 'none' }}
-      className="todoapp__footer"
-      data-cy="Footer"
-    >
+    <footer className="todoapp__footer" data-cy="Footer">
       <span className="todo-count" data-cy="TodosCounter">
-        {activeTodosCount > 0
-          ? `${activeTodosCount} items left`
-          : '0 items left'}
+        {`${activeTodosCount} items left`}
       </span>
 
-      {/* Active link should have the 'selected' class */}
       <nav className="filter" data-cy="Filter">
         {filters.map(({ label, value }) => (
           <a
@@ -52,7 +45,6 @@ export const Footer: React.FC<InterfaceFooter> = ({
         ))}
       </nav>
 
-      {/* this button should be disabled if there are no completed todos */}
       <button
         type="button"
         className="todoapp__clear-completed"

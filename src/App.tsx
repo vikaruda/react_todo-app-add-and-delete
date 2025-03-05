@@ -10,6 +10,7 @@ import classNames from 'classnames';
 import { Header } from './components/Header';
 import { TodoList } from './components/TodoList';
 import { Footer } from './components/Footer';
+import { TodoFilter } from './types/FilterEnum';
 
 export const App: React.FC = () => {
   const [creatNewTodos, setCreateNewTodos] = useState('');
@@ -23,7 +24,7 @@ export const App: React.FC = () => {
   const [loadingNewItem, setLoadingNewItem] = useState(false);
   const [arrTodos, setArrTodos] = useState<number[]>([]);
   const [delLoader, setDelLoader] = useState<number | null>(null);
-
+  const [activeTodosCount, setActiveTodosCount] = useState(0);
 
   useEffect(() => {
     todosService
@@ -44,11 +45,11 @@ export const App: React.FC = () => {
 
 
   const getFilteredTodos = () => {
-    if (filter === 'active') {
+    if (filter === TodoFilter.Active) {
       return todoItem.filter(todo => !todo.completed);
     }
 
-    if (filter === 'completed') {
+    if (filter === TodoFilter.Completed) {
       return todoItem.filter(todo => todo.completed);
     }
 
@@ -56,6 +57,14 @@ export const App: React.FC = () => {
   };
 
   const filteredTodos = getFilteredTodos();
+
+  useEffect(() => {
+    const activeCount = todoItem.filter(todo => !todo.completed).length;
+
+    setActiveTodosCount(activeCount);
+  }, [todoItem]); // Слідкуємо за змінами в todoItem
+
+
 
   const handleForm = (event: React.FormEvent) => {
     event.preventDefault();
@@ -72,16 +81,14 @@ export const App: React.FC = () => {
 
     const tempTodoItem = { ...newTodo, id: Date.now() };
 
-    // Add the new todo to the UI immediately (optimistic update)
+    // Спочатку додаємо новий todo без оновлення activeTodosCount
     setTodoItem(prev => [...prev, tempTodoItem]);
     setArrTodos(prevItem => [...prevItem, tempTodoItem.id]);
     setLoadingNewItem(true);
 
-    // Make API call to create the todo
     todosService
       .createPost(newTodo)
       .then(createdTodo => {
-        // Update the UI with the created todo only if the API call succeeds
         setTodoItem(prev =>
           prev.map(todo => (todo.id === tempTodoItem.id ? createdTodo : todo)),
         );
@@ -94,10 +101,10 @@ export const App: React.FC = () => {
         setStateError('Unable to add a todo');
       })
       .finally(() => {
+        // Лічильник оновлюється лише після того, як todo створене
         setLoadingNewItem(false);
-        // Remove the temporary item after the API call completes
         setTimeout(() => {
-          setArrTodos([]); // Clear the temporary array after 1 second
+          setArrTodos([]); // Очищаємо тимчасовий масив через 1 секунду
         }, 1000);
       });
   };
@@ -115,7 +122,7 @@ export const App: React.FC = () => {
     });
   };
 
-  function errorGetTodos() {
+  const errorGetTodos = () => {
     setStateError('');
 
     if (creatNewTodos.trim() === '') {
@@ -126,10 +133,11 @@ export const App: React.FC = () => {
 
       return;
     }
-  }
+  };
 
   const handleTodoDelete = (usersId: number) => {
     setArrTodos(prevItem => prevItem.filter(id => id !== usersId));
+    setDelLoader(userId);
     todosService
       .deleteTodos(usersId)
       .then(() => {
@@ -167,8 +175,6 @@ export const App: React.FC = () => {
         setTimeout(() => setStateError(''), 3000);
       });
   };
-
-  const activeTodosCount = todoItem.filter(todo => !todo.completed).length;
 
   if (!todosService.USER_ID) {
     return <UserWarning />;

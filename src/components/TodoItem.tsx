@@ -20,6 +20,7 @@ export const TodoItem: React.FC<TodoIt> = ({
   setTodoItem,
   handleTodoDelete,
   arrTodos,
+  delLoader,
 }) => {
   const toggleTodo = (id: number) => {
     setControlChecked(prev =>
@@ -71,7 +72,7 @@ export const TodoItem: React.FC<TodoIt> = ({
           ×
         </button>
 
-        <TodoLoader isActive={isLoading} />
+        <TodoLoader isActive={isLoading || delLoader === tempTodo.id} />
       </div>
     </div>
   );
